@@ -9,7 +9,6 @@ st.write("Enter a news article or snippet to detect whether it is **Fake** or **
 def load_model():
     model = DistilBertForSequenceClassification.from_pretrained("RayOfLife/distilbert-fake-news")
     tokenizer = DistilBertTokenizerFast.from_pretrained("RayOfLife/distilbert-fake-news")
-    model.to(torch.device("cpu"))  # Force CPU use
     return model, tokenizer
 
 model, tokenizer = load_model()
@@ -21,13 +20,12 @@ if st.button("Check"):
         st.warning("Please enter some text.")
     else:
         inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
-        inputs = {k: v.to(torch.device("cpu")) for k, v in inputs.items()}
         with torch.no_grad():
             outputs = model(**inputs)
             logits = outputs.logits
             probs = torch.nn.functional.softmax(logits, dim=1)
-            predicted_class = int(torch.argmax(probs, dim=1).cpu().item())
-            confidence = float(probs[0][predicted_class].cpu().item())
+            predicted_class = int(torch.argmax(probs, dim=1).item())
+            confidence = float(probs[0][predicted_class].item())
 
         label = "True News" if predicted_class == 1 else "Fake News"
         st.markdown(f"### Prediction: {label}")
