@@ -1,13 +1,15 @@
 import streamlit as st
 from transformers import DistilBertTokenizerFast, DistilBertForSequenceClassification
 import torch
-import numpy as np
 
-# Load model and tokenizer from Hugging Face
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 model = DistilBertForSequenceClassification.from_pretrained("RayOfLife/distilbert-fake-news")
+model.to(device)
+model.eval()
+
 tokenizer = DistilBertTokenizerFast.from_pretrained("RayOfLife/distilbert-fake-news")
 
-# Streamlit app UI
 st.title("Fake News Detection Chatbot")
 st.write("Enter a news article snippet to check if it's Fake or Real.")
 
@@ -18,6 +20,8 @@ if st.button("Check"):
         st.warning("Please enter some text.")
     else:
         inputs = tokenizer(user_input, return_tensors="pt", truncation=True, padding=True)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        
         with torch.no_grad():
             outputs = model(**inputs)
             logits = outputs.logits
